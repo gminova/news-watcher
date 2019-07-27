@@ -1,4 +1,14 @@
-const express = require("express");
+const express = require("express"); //route handlers
+const path = require('path'); //populate path property of the address
+const logger = require('morgan'); // http request logging
+const bodyParser = require('body-parser'); // access to http request body
+const cp = require('child_process'); //forking a separate node.js processes
+const responseTime = require('response-time'); // performance logging
+const assert = require('assert'); // assert tesing of values
+const helmet = require('helmet'); //security measures
+const RateLimit = require('express-rate-limit'); //IP based rate limiter
+const csp = require('helmet-csp'); 
+
 const app = express();
 
 app.get("/", function(req, res) {

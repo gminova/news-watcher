@@ -89,7 +89,15 @@ app.use(function(req, res, next) {
     req.db = db;
     req.node2 = node2;
     next();
-})
+});
+
+//Express route handlers
+
+//Rest API routes
+app.use('/api/users', users);
+app.use('/api/sessions', session);
+app.use('/api/sharednews', sharedNews);
+app.use('/api/homenews', homeNews);
 
 app.get("/", function(req, res) {
     console.log("Send message on get request");

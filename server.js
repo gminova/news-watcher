@@ -51,6 +51,11 @@ app.use(responseTime());
 //log all http requests, dev option gives it specific styling
 app.use(logger('dev'));
 
+//set-up response object in routes to contain a body property with an object of
+//what is parsed from a JSON body request 
+//no need for allowing a  huge body, as it might be an attack, hence use the limit option
+app.use(bodyParser.json({limit: '100kb'}));
+
 app.get("/", function(req, res) {
     console.log("Send message on get request");
     res.send("Testing express server!");

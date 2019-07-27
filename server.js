@@ -44,6 +44,10 @@ app.use(csp({
         imgSrc: ['*']
     }
 }));
+
+//measure response times
+app.use(responseTime());
+
 app.get("/", function(req, res) {
     console.log("Send message on get request");
     res.send("Testing express server!");

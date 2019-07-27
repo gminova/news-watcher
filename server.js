@@ -52,9 +52,14 @@ app.use(responseTime());
 app.use(logger('dev'));
 
 //set-up response object in routes to contain a body property with an object of
-//what is parsed from a JSON body request 
+//what is parsed from a JSON body request payload
 //no need for allowing a  huge body, as it might be an attack, hence use the limit option
 app.use(bodyParser.json({limit: '100kb'}));
+
+// main HTML to be returned is in the build directory
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 app.get("/", function(req, res) {
     console.log("Send message on get request");

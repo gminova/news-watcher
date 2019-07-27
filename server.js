@@ -73,6 +73,17 @@ node2.on('exit', function(code) {
     node2 = cp.fork('./worker/app_FORK.js');
 });
 
+//mongoDB data layer connection
+const db = {};
+const MongoClient = require('mongodb').MongoClient;
+
+//use connect method to link to the server
+MongoClient.connect(process.env.MONGODB_CONNECT_URL, function(err, client) {
+    assert.equal(null, err);
+    db.client = client;
+    db.collection = client.db('newswatcherdb').collection('newswatcher');
+})
+
 app.get("/", function(req, res) {
     console.log("Send message on get request");
     res.send("Testing express server!");

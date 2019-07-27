@@ -115,6 +115,12 @@ if(app.get('env') === 'development') {
     });
 }
 
+//production error handler without a stacktrace exposed to users
+app.use(function(err, req, res, next) {
+    res.status(err.status || 500).json({message: err.toString(),
+    error: {}});
+    console.log(err);
+});
 app.get("/", function(req, res) {
     console.log("Send message on get request");
     res.send("Testing express server!");

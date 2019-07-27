@@ -1,4 +1,4 @@
-# News Watcher
+# [News Watcher](http://newswatcher-env.nfq2tujsrs.eu-west-2.elasticbeanstalk.com/)
 ## Vision
 _Users of News Watcher can get news served up to them. The News Watcher
 App will alert them and save important info, without them needing to

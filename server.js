@@ -99,6 +99,14 @@ app.use('/api/sessions', session);
 app.use('/api/sharednews', sharedNews);
 app.use('/api/homenews', homeNews);
 
+//catch everything else and serve 404 handler
+app.use(function(req, res, next) {
+    const err = new Error('Not Found :(');
+    err.status = 404;
+    next(err);
+});
+
+
 app.get("/", function(req, res) {
     console.log("Send message on get request");
     res.send("Testing express server!");

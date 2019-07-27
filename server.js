@@ -61,6 +61,8 @@ app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
+//serve static content like html, css, js, images, etc. for the react component
+app.use(express.static(path.join(__dirname, 'build')))
 app.get("/", function(req, res) {
     console.log("Send message on get request");
     res.send("Testing express server!");

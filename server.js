@@ -106,6 +106,14 @@ app.use(function(req, res, next) {
     next(err);
 });
 
+//development error handler that will add in a stacktrace
+if(app.get('env') === 'development') {
+    app.use(function(err, req, res, next) {
+        res.status(err.status || 500).json({message: err.toString(), 
+            error: err});
+        console.log(err);
+    });
+}
 
 app.get("/", function(req, res) {
     console.log("Send message on get request");

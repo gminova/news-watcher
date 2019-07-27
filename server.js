@@ -62,7 +62,17 @@ app.get('/', function(req, res) {
 });
 
 //serve static content like html, css, js, images, etc. for the react component
-app.use(express.static(path.join(__dirname, 'build')))
+app.use(express.static(path.join(__dirname, 'build')));
+
+//fork off a process and give it a file to execute to offload your main node thread
+const node2 = cp.fork('./worker/app_FORK.js');
+
+//restart forked process in case it shuts down during runtime errors
+node2.on('exit', function(code) {
+    node2 = undefined;
+    node2 = cp.fork('./worker/app_FORK.js');
+});
+
 app.get("/", function(req, res) {
     console.log("Send message on get request");
     res.send("Testing express server!");

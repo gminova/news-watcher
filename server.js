@@ -48,6 +48,9 @@ app.use(csp({
 //measure response times
 app.use(responseTime());
 
+//log all http requests, dev option gives it specific styling
+app.use(logger('dev'));
+
 app.get("/", function(req, res) {
     console.log("Send message on get request");
     res.send("Testing express server!");

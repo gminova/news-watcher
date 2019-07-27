@@ -121,13 +121,14 @@ app.use(function(err, req, res, next) {
     error: {}});
     console.log(err);
 });
-app.get("/", function(req, res) {
-    console.log("Send message on get request");
-    res.send("Testing express server!");
-});
 
+//pick necessary port in production
 app.set("port", process.env.PORT || 3000);
 
-let server = app.listen(app.get("port"), function() {
+const server = app.listen(app.get("port"), function() {
     console.log(`Express server listening on port: ${server.address().port}`);
 });
+
+server.db = db;
+server.node2 = node2;
+module.exports = server;

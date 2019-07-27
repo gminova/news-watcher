@@ -82,6 +82,13 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL, function(err, client) {
     assert.equal(null, err);
     db.client = client;
     db.collection = client.db('newswatcherdb').collection('newswatcher');
+});
+
+//sharing objects by exposing variables with a middleware injection
+app.use(function(req, res, next) {
+    req.db = db;
+    req.node2 = node2;
+    next();
 })
 
 app.get("/", function(req, res) {

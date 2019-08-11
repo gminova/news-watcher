@@ -49,7 +49,7 @@ router.post("/", function postSession(req, res, next) {
           function comparePassword(err, match) {
             if (match) {
               try {
-                const token = jwt.encode(
+                var token = jwt.encode(
                   {
                     authorized: true,
                     sessionIP: req.ip,
@@ -59,12 +59,14 @@ router.post("/", function postSession(req, res, next) {
                   },
                   process.env.JWT_SECRET
                 );
-                res.status(201).json({
-                  displayName: user.displayName,
-                  userId: user._id.toHexString(),
-                  token: token,
-                  msg: "Authorized"
-                });
+                res
+                  .status(201)
+                  .json({
+                    displayName: user.displayName,
+                    userId: user._id.toHexString(),
+                    token: token,
+                    msg: "Authorized"
+                  });
               } catch (err) {
                 return next(err);
               }

@@ -141,7 +141,7 @@ router.get("/:id", authHelper.checkAuth, function(req, res, next) {
 
 //UPDATE A USER PROFILE
 
-router.put(":/id", authHelper, checkAuth, function(req, res, next) {
+router.put(":/id", authHelper.checkAuth, function(req, res, next) {
   //verify passed id matches auth token
   if (req.params.id != req.auth.userId)
     return next(new Error("Invalid request for account update"));

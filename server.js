@@ -65,7 +65,7 @@ app.get('/', function(req, res) {
 app.use(express.static(path.join(__dirname, 'build')));
 
 //fork off a process and give it a file to execute to offload your main node thread
-const node2 = cp.fork('./worker/app_FORK.js');
+let node2 = cp.fork('./worker/app_FORK.js');
 
 //restart forked process in case it shuts down during runtime errors
 node2.on('exit', function(code) {

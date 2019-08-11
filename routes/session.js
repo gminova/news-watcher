@@ -24,7 +24,7 @@ router.post("/", function postSession(req, res, next) {
       .required(),
     password: joi
       .string()
-      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{7, 15}$/)
+      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{7,15}$/)
       .required()
   };
 
@@ -36,7 +36,7 @@ router.post("/", function postSession(req, res, next) {
         )
       );
 
-    req.body.collection.findOne(
+    req.db.collection.findOne(
       { type: "USER_TYPE", email: req.body.email },
       function(err, user) {
         if (err) return next(err);
@@ -59,14 +59,12 @@ router.post("/", function postSession(req, res, next) {
                   },
                   process.env.JWT_SECRET
                 );
-                res
-                  .status(201)
-                  .json({
-                    displayName: user.displayName,
-                    userId: user._id.toHexString(),
-                    token: token,
-                    msg: "Authorized"
-                  });
+                res.status(201).json({
+                  displayName: user.displayName,
+                  userId: user._id.toHexString(),
+                  token: token,
+                  msg: "Authorized"
+                });
               } catch (err) {
                 return next(err);
               }
@@ -82,12 +80,12 @@ router.post("/", function postSession(req, res, next) {
 
 //delete token as user logs out
 
-router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
-    //verify the passed in id is the same as that in the auth token
-    if (req.params.id != req.auth.userId)
-    return next(new Error('Invalid request for logout'));
+router.delete("/:id", authHelper.checkAuth, function(req, res, next) {
+  //verify the passed in id is the same as that in the auth token
+  if (req.params.id != req.auth.userId)
+    return next(new Error("Invalid request for logout"));
 
-    res.status(200).json({ msg: 'Logged out' });
+  res.status(200).json({ msg: "Logged out" });
 });
 
-module.exports =router;
+module.exports = router;

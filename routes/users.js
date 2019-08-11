@@ -31,12 +31,12 @@ router.post("/", function postUser(req, res, next) {
   };
 
   joi.validate(req.body, schema, function(err, value) {
-    if (err) return next(err);
-    // return next(
-    //   new Error(
-    //     "Invalid field: display name 3 - 50 alphanumeric, valid email, password 7 - 15 (one number, one special character)"
-    //   )
-    // );
+    if (err) 
+    return next(
+      new Error(
+        "Invalid field: display name 3 - 50 alphanumeric, valid email, password 7 - 15 (one number, one special character)"
+      )
+    );
 
     req.db.collection.findOne(
       { type: "USER_TYPE", email: req.body.email },

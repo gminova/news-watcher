@@ -9,8 +9,6 @@
 //var bcrypt = require('bcryptjs');
 var assert = require('assert');
 
-// To hit production AWS!
-//var request = require('supertest')('https://www.newswatcherfs.com/');
 
 // run locally, like in vscode debugger and test against that
 //var request = require('supertest')('http://localhost:3000');
@@ -54,8 +52,8 @@ describe('API endpoint exercising integration tests', function () {
 		it("should create a new registered User", function (done) {
 			request.post("/api/users")
 				.send({
-					email: 'bush@sample.com',
-					displayName: 'Bushman',
+					email: 'gigi@sample.com',
+					displayName: 'GigiTest',
 					password: 'abc123*'
 				})
 				.end(function (err, res) {

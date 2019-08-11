@@ -49,7 +49,7 @@ router.post("/", function postSession(req, res, next) {
           function comparePassword(err, match) {
             if (match) {
               try {
-                var token = jwt.encode(
+                let token = jwt.encode(
                   {
                     authorized: true,
                     sessionIP: req.ip,

@@ -86,4 +86,14 @@ router.post("/", authHelper.checkAuth, function(req, res, next) {
   });
 });
 
+router.get("/", authHelper.checkAuth, function(req, res, next) {
+  req.body.collection
+    .find({ type: "SHAREDSTORY_TYPE" })
+    .toArray(function(err, docs) {
+      if (err) return next(err);
+
+      res.status(200).json(docs);
+    });
+});
+
 module.exports = router;

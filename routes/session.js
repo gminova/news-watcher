@@ -1,20 +1,22 @@
-//A module for session login and logout
+//
+// session.js: A Node.js Module for session login and logout route handling.
+//
+
 "use strict";
-const express = require("express");
-const bcrypt = require("bcryptjs"); //for password hash comparing
-const jwt = require("jwt-simple"); //for token authentication
-const joi = require("joi"); //for data validation
-const authHelper = require("./authHelper");
+let express = require("express");
+let bcrypt = require("bcryptjs"); // For password hash comparing
+let jwt = require("jwt-simple"); // For token authentication
+let joi = require("joi"); // For data validation
+let authHelper = require("./authHelper");
 
-const router = express.Router();
+let router = express.Router();
 
-//create security token as the user logs in that can be passed to the client and
-//used on subsequent calls.
-//the user email and password are sent in the body of the request
-
+//
+// Create a security token as the user logs in that can be passed to the client and used on subsequent calls.
+// The user email and password are sent in the body of the request.
+//
 router.post("/", function postSession(req, res, next) {
-  //password must be between 7 and 15 characters in length
-  //and contain at least one numeric digit and a speial character
+  // Password must be 7 to 15 characters in length and contain at least one numeric digit and a special character
   let schema = {
     email: joi
       .string()
@@ -80,10 +82,13 @@ router.post("/", function postSession(req, res, next) {
   });
 });
 
-//delete token as user logs out
 
+//
+// Delete the token as a user logs out
+//
 router.delete("/:id", authHelper.checkAuth, function(req, res, next) {
-  //verify the passed in id is the same as that in the auth token
+  // Verify the passed in id is the same as that in the auth token
+
   if (req.params.id != req.auth.userId)
     return next(new Error("Invalid request for logout"));
 

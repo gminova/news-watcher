@@ -26,19 +26,19 @@ router.post("/", function postUser(req, res, next) {
       .required(),
     password: joi
       .string()
-      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{7, 15}$/)
+      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{7,15}$/)
       .required()
   };
 
   joi.validate(req.body, schema, function(err, value) {
-    if (err)
-      return next(
-        new Error(
-          "Invalid field: display name 3 - 50 alphanumeric, valid email, password 7 - 15 (one number, one special character)"
-        )
-      );
+    if (err) return next(err);
+    // return next(
+    //   new Error(
+    //     "Invalid field: display name 3 - 50 alphanumeric, valid email, password 7 - 15 (one number, one special character)"
+    //   )
+    // );
 
-    req.body.collection.findOne(
+    req.db.collection.findOne(
       { type: "USER_TYPE", email: req.body.email },
       function(err, doc) {
         if (err) return next(err);
@@ -79,8 +79,17 @@ router.post("/", function postUser(req, res, next) {
 
         bcrypt.hash(req.body.password, 10, function getHash(err, hash) {
           if (err) return next(err);
-          req.node2.send({ msg: "REFRESH_STORIES", doc: result.ops[0] });
-          res.status(201).json(result.ops[0]);
+
+          xferUser.passwordHash = hash;
+          req.db.collection.insertOne(xferUser, function createUser(
+            err,
+            result
+          ) {
+            if (err) return next(err);
+
+            req.node2.send({ msg: "REFRESH_STORIES", doc: result.ops[0] });
+            res.status(201).json(result.ops[0]);
+          });
         });
       }
     );

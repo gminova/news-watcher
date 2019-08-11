@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "mochatest": "mocha --timeout 30000 test/functional_api_crud.js"
   },
   "repository": {
     "type": "git",

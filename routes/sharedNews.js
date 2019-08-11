@@ -119,4 +119,50 @@ router.delete("/:sid", authHelper.checkAuth, function(req, res, next) {
   );
 });
 
+//
+// Post a comment from a user to a shared news story.
+//
+router.post("/:sid/Comments", authHelper.checkAuth, function(req, res, next) {
+  // Validate the body
+  let schema = {
+    comment: joi
+      .string()
+      .max(250)
+      .required()
+  };
+
+  joi.validate(req.body, schema, function(err) {
+    if (err) return next(err);
+
+    let xferComment = {
+      displayName: req.auth.displayName,
+      userId: req.auth.userId,
+      dateTime: Date.now(),
+      comment: req.body.comment.substring(0, 250)
+    };
+
+    // Not allowed at free tier!!!req.db.collection.findOneAndUpdate({ type: 'SHAREDSTORY_TYPE', _id: req.params.sid, $where: 'this.comments.length<29' },
+    req.db.collection.findOneAndUpdate(
+      { type: "SHAREDSTORY_TYPE", _id: req.params.sid },
+      { $push: { comments: xferComment } },
+      function(err, result) {
+        if (result && result.value == null) {
+          return next(new Error("Comment limit reached"));
+        } else if (err) {
+          console.log("POSSIBLE COMMENT CONTENTION ERROR? err:", err);
+          return next(err);
+        } else if (result.ok != 1) {
+          console.log(
+            "POSSIBLE COMMENT CONTENTION ERROR? result:",
+            result
+          );
+          return next(new Error("Comment save failure"));
+        }
+
+        res.status(201).json({ msg: "Comment added" });
+      }
+    );
+  });
+});
+
 module.exports = router;

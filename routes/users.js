@@ -1,16 +1,26 @@
+//
+// users.js: A Node.js Module for for management of a NewsWatcher user settings and news newsFilters CRUD operations.
+// There is middleware that makes sure a user is logged in so they can only get their profile.
+// A profile is really associated with a user and never goes away,
+// so there is no post as it is already there and a delete is also not needed
+//
+
 "use strict";
+let express = require("express");
+let bcrypt = require("bcryptjs");
+let async = require("async");
+let joi = require("joi"); // For data validation
+let authHelper = require("./authHelper");
+let ObjectId = require("mongodb").ObjectID;
 
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const async = require("async");
-const joi = require("joi");
-const authHelper = require("./authHelper");
-const ObjectId = require("mongodb").ObjectID;
+let router = express.Router();
 
-const router = express.Router();
-
+//
+// Create a User in the Collection for NewsWatcher.
+// Does not require session authentication at this point as this is the registration step.
+//
 router.post("/", function postUser(req, res, next) {
-  //Password must be 7-15 characters in length and contain at least one numeric digit and a special character
+  // Password must be 7 to 15 characters in length and contain at least one numeric digit and a special character
   let schema = {
     displayName: joi
       .string()
@@ -30,13 +40,13 @@ router.post("/", function postUser(req, res, next) {
       .required()
   };
 
-  joi.validate(req.body, schema, function(err, value) {
-    if (err) return next(err);
-    // return next(
-    //   new Error(
-    //     "Invalid field: display name 3 - 50 alphanumeric, valid email, password 7 - 15 (one number, one special character)"
-    //   )
-    // );
+  joi.validate(req.body, schema, function(err) {
+    if (err)
+      return next(
+        new Error(
+          "Invalid field: display name 3 to 50 alpanumeric, valid email, password 7 to 15 (one number, one special character)"
+        )
+      );
 
     req.db.collection.findOne(
       { type: "USER_TYPE", email: req.body.email },
@@ -71,6 +81,7 @@ router.post("/", function postUser(req, res, next) {
               alertFrequency: 0,
               enableAutoDelete: false,
               deleteTime: 0,
+              timeOfLastScan: 0,
               newsStories: []
             }
           ],
@@ -96,37 +107,43 @@ router.post("/", function postUser(req, res, next) {
   });
 });
 
-//DELETE A USER FROM COLLECTION
-
+//
+// Delete a User in the Collection for NewsWatcher.
+//
 router.delete("/:id", authHelper.checkAuth, function(req, res, next) {
-  //verify that the passed id to delete is the same one as in the token
+  // Verify that the passed in id to delete is the same as that in the auth token
   if (req.params.id != req.auth.userId)
     return next(new Error("Invalid request for account deletion"));
 
-  //Mongo should do the work for queuing this up and retrying if there is a conflict, as per Mongo documentation
-  //This requires a lock on their part
+  // MongoDB should do the work of queuing this up and retrying if there is a conflict, According to their documentation.
+  // This actually requires a write lock on their part.
   req.db.collection.findOneAndDelete(
     { type: "USER_TYPE", _id: ObjectId(req.auth.userId) },
     function(err, result) {
       if (err) {
-        console.log("POSSIBLE USER DELETION CONTENTION? err: ", err);
+        console.log("POSSIBLE USER DELETION CONTENTION ERROR? err:", err);
         return next(err);
       } else if (result.ok != 1) {
-        console.log("POSSIBLE USER DELETION ERROR? result: ", result);
+        console.log(
+          "POSSIBLE USER DELETION CONTENTION ERROR? result:",
+          result
+        );
         return next(new Error("Account deletion failure"));
       }
 
-      res.status(200).json({ msg: "User deleted" });
+      res.status(200).json({ msg: "User Deleted" });
     }
   );
 });
 
-//GET A USER
-
+//
+// Get a NewsWatcher user
+//
 router.get("/:id", authHelper.checkAuth, function(req, res, next) {
-  // Verify that the passed in id to get is the same as that in the auth token
+  // Verify that the passed in id to delete is the same as that in the auth token
   if (req.params.id != req.auth.userId)
     return next(new Error("Invalid request for account fetch"));
+
   req.db.collection.findOne(
     { type: "USER_TYPE", _id: ObjectId(req.auth.userId) },
     function(err, doc) {
@@ -148,16 +165,17 @@ router.get("/:id", authHelper.checkAuth, function(req, res, next) {
   );
 });
 
-//UPDATE A USER PROFILE
-
-router.put(":/id", authHelper.checkAuth, function(req, res, next) {
-  //verify passed id matches auth token
+//
+// Update a user profile. For example, they have edited their newsFilters.
+//
+router.put("/:id", authHelper.checkAuth, function(req, res, next) {
+  // Verify that the passed in id is the same as that in the auth token
   if (req.params.id != req.auth.userId)
-    return next(new Error("Invalid request for account update"));
+    return next(new Error("Invalid request for account deletion"));
 
-  //Limit number of filters for news
+  // Limit the number of newsFilters
   if (req.body.newsFilters.length > process.env.MAX_FILTERS)
-    return next(new Error("Too many news filters"));
+    return next(new Error("Too many news newsFilters"));
 
   // clear out leading and trailing spaces
   for (let i = 0; i < req.body.newsFilters.length; i++) {
@@ -198,9 +216,7 @@ router.put(":/id", authHelper.checkAuth, function(req, res, next) {
       .max(100)
   };
 
-  // Async allows for joi to validate over and over while waiting for each callback to return
-  // for each of the filters for a user. When all are processed, the final async function is called
-  async.eachOfSeries(
+  async.eachSeries(
     req.body.newsFilters,
     function(filter, innercallback) {
       joi.validate(filter, schema, function(err) {
@@ -230,7 +246,10 @@ router.put(":/id", authHelper.checkAuth, function(req, res, next) {
           { returnOriginal: false },
           function(err, result) {
             if (err) {
-              console.log("POSSIBLE USER PUT CONTENTION ERROR? err:", err);
+              console.log(
+                "POSSIBLE USER PUT CONTENTION ERROR? err:",
+                err
+              );
               return next(err);
             } else if (result.ok != 1) {
               console.log(
@@ -254,13 +273,12 @@ router.put(":/id", authHelper.checkAuth, function(req, res, next) {
 // We can't move a story there that is already there. We compare the link to tell.
 // There is a limit to how many can be saved.
 //
-
 router.post("/:id/savedstories", authHelper.checkAuth, function(
   req,
   res,
   next
 ) {
-  // Verify that the passed in id is the same as that in the auth token
+  // Verify that the passed in id to delete is the same as that in the auth token
   if (req.params.id != req.auth.userId)
     return next(new Error("Invalid request for saving story"));
 
@@ -297,6 +315,7 @@ router.post("/:id/savedstories", authHelper.checkAuth, function(
 
   joi.validate(req.body, schema, function(err) {
     if (err) return next(err);
+
     // This uses the MongoDB operators to test the savedStories array to make sure:
     // A. Story is not aready in there.
     // B. We limit the number of saved stories to 30
@@ -315,7 +334,10 @@ router.post("/:id/savedstories", authHelper.checkAuth, function(
           console.log("POSSIBLE save story CONTENTION ERROR? err:", err);
           return next(err);
         } else if (result.ok != 1) {
-          console.log("POSSIBLE save story CONTENTION ERROR? result:", result);
+          console.log(
+            "POSSIBLE save story CONTENTION ERROR? result:",
+            result
+          );
           return next(new Error("Story save failure"));
         }
         res.status(200).json(result.value);
@@ -342,7 +364,10 @@ router.delete("/:id/savedstories/:sid", authHelper.checkAuth, function(
     { returnOriginal: true },
     function(err, result) {
       if (err) {
-        console.log("POSSIBLE saved story delete CONTENTION ERROR? err:", err);
+        console.log(
+          "POSSIBLE saved story delete CONTENTION ERROR? err:",
+          err
+        );
         return next(err);
       } else if (result.ok != 1) {
         console.log(

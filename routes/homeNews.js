@@ -1,9 +1,16 @@
-"use strict";
+//
+// homeNews.js: A Node.js Module for for home news story management.
+//
+//
 
+"use strict";
 let express = require("express");
+
 let router = express.Router();
 
-//Retrieve all top news, same for all users
+//
+// Return all the Home Page news stories. Call the middleware first to verify we have a logged in user.
+//
 router.get("/", function(req, res, next) {
   req.db.collection.findOne(
     { _id: process.env.GLOBAL_STORIES_ID },

@@ -83,8 +83,8 @@ node2.on("exit", function(code) {
 //
 // MongoDB database connection initialization
 //
-var db = {};
-var MongoClient = require("mongodb").MongoClient;
+let db = {};
+let MongoClient = require("mongodb").MongoClient;
 
 //Use connect method to connect to the Server
 MongoClient.connect(

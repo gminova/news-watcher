@@ -1,13 +1,26 @@
-"use strict";
+//
+// sharedNews.js: A Node.js Module for for shared news story management.
+//
+// Each shared story is kept in its own Document.
+//
+// Users cannot delete individual stories, so there is no delete.
+// There is a background timer that deletes shared stories that are old.
+//
 
+"use strict";
 let express = require("express");
-let joi = require("joi"); //for data validation
+let joi = require("joi"); // For data validation
 let authHelper = require("./authHelper");
 
 let router = express.Router();
 
+//
+// Share a story for all NewsWatcher users to see and comment on.
+// Don't allow a story to be shared twice. We compare the id/link to tell.
+// There is a limit to how many stories can be shared.
+//
 router.post("/", authHelper.checkAuth, function(req, res, next) {
-  //validate the body
+  // Validate the body
   let schema = {
     contentSnippet: joi
       .string()
@@ -32,7 +45,7 @@ router.post("/", authHelper.checkAuth, function(req, res, next) {
       .string()
       .max(100)
       .required(),
-    titile: joi
+    title: joi
       .string()
       .max(200)
       .required()
@@ -40,24 +53,25 @@ router.post("/", authHelper.checkAuth, function(req, res, next) {
 
   joi.validate(req.body, schema, function(err) {
     if (err) return next(err);
-    //First make sure we are not at the count limit
-    req.body.collection.count({ type: "SHAREDSTORY_TYPE" }, function(
-      err,
-      count
-    ) {
+
+    // We first make sure we are not at the 100 count limit.
+    req.db.collection.count({ type: "SHAREDSTORY_TYPE" }, function(err, count) {
       if (err) return next(err);
+
       if (count > process.env.MAX_SHARED_STORIES)
         return next(new Error("Shared story limit reached"));
 
-      //make sure the story was not already shared
-      req.body.collection.count(
+      // Make sure the story was not already shared
+      req.db.collection.count(
         { type: "SHAREDSTORY_TYPE", _id: req.body.storyID },
         function(err, count) {
           if (err) return next(err);
-          if (count > 0) return next(new Error("Story was already shared"));
+          if (count > 0) return next(new Error("Story was already shared."));
 
-          //set id and guarantee uniqueness of failures
-          let xrefStory = {
+          // Now we can create this as a shared news story Document.
+          // Note that we don't need to worry about simultaneous post requests creating the same story
+          // as the id uniqueness will force that and fail other requests.
+          let xferStory = {
             _id: req.body.storyID,
             type: "SHAREDSTORY_TYPE",
             story: req.body,
@@ -67,12 +81,12 @@ router.post("/", authHelper.checkAuth, function(req, res, next) {
                 userId: req.auth.userId,
                 dateTime: Date.now(),
                 comment:
-                  req.auth.displayName + "thought everyone might enjoy this!"
+                  req.auth.displayName + " thought everyone might enjoy this!"
               }
             ]
           };
 
-          req.body.collection.insertOne(xrefStory, function createUser(
+          req.db.collection.insertOne(xferStory, function createUser(
             err,
             result
           ) {
@@ -86,8 +100,11 @@ router.post("/", authHelper.checkAuth, function(req, res, next) {
   });
 });
 
+//
+// Return all the shared news stories. Call the middleware first to verify we have a logged in user.
+//
 router.get("/", authHelper.checkAuth, function(req, res, next) {
-  req.body.collection
+  req.db.collection
     .find({ type: "SHAREDSTORY_TYPE" })
     .toArray(function(err, docs) {
       if (err) return next(err);
@@ -96,6 +113,9 @@ router.get("/", authHelper.checkAuth, function(req, res, next) {
     });
 });
 
+//
+// Delete a story from the shared folder.
+//
 router.delete("/:sid", authHelper.checkAuth, function(req, res, next) {
   req.db.collection.findOneAndDelete(
     { type: "SHAREDSTORY_TYPE", _id: req.params.sid },

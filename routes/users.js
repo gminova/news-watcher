@@ -1,7 +1,7 @@
 "use strict";
 
 const express = require("express");
-const bycript = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 const async = require("async");
 const joi = require("joi");
 const authHelper = require("./authHelper");

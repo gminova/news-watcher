@@ -96,4 +96,27 @@ router.get("/", authHelper.checkAuth, function(req, res, next) {
     });
 });
 
+router.delete("/:sid", authHelper.checkAuth, function(req, res, next) {
+  req.db.collection.findOneAndDelete(
+    { type: "SHAREDSTORY_TYPE", _id: req.params.sid },
+    function(err, result) {
+      if (err) {
+        console.log(
+          "POSSIBLE SHARED STORY DELETION CONTENTION ERROR? err:",
+          err
+        );
+        return next(err);
+      } else if (result.ok != 1) {
+        console.log(
+          "POSSIBLE SHARED STORY DELETION CONTENTION ERROR? result:",
+          result
+        );
+        return next(new Error("Shared story deletion failure"));
+      }
+
+      res.status(200).json({ msg: "Shared story Deleted" });
+    }
+  );
+});
+
 module.exports = router;
